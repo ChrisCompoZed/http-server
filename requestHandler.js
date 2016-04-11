@@ -1,7 +1,9 @@
 'use strict'
 var url = require ('url')
 
-var requestHandler = function ( request, response ){
+var fs = require('fs')
+
+var requestHandler = function ( request, response, callback ){
 
   var responseBody = ''
 
@@ -10,69 +12,66 @@ var requestHandler = function ( request, response ){
   var pages = [
     {
       url: '/',
-      content: '<a href="/first-of-pair">first-of-pair</a></br><a href="/second-of-pair">second-of-pair</a></br><a href="/the-pair">the-pair</a>'
+      filename: 'home.html'
     },
     {
       url: '/first-of-pair',
-      content: '<p>And in the beginning there was the First Pair</p>'
+      filename: 'first-of-pair.html'
     },
     {
       url: '/second-of-pair',
-      content: '<p>and on the second day he separated the first pair from the second</p>'
+      filename: 'second-of-pair.html'
     },
     {
       url: '/the-pair',
-      content: '<p>The pair both have suspicious moustaches</p>'
+      filename: 'the-pair.html'
     },
     {
       url: '/greeting',
-      content: '<p>Welcome, ' + requestUrl.query.name + '!</p>'
+      filename: 'greeting.html'
     }
   ]
-
-  response.statusCode = 200
 
   var selectedPage = pages.filter(function(element){
       return element.url === requestUrl.pathname
   })
 
+  var fileToRead = ''
+
+  //To use with Files on HDD
   if(selectedPage.length > 0)
   {
-    responseBody = selectedPage[0].content
+    //fileToRead = selectedPage[0].url.replace('/','') + '.html'
+    fileToRead = selectedPage[0].filename
+    response.statusCode = 200
   }
   else {
+    fileToRead = '404.html'
     response.statusCode = 404
-    responseBody = '<p>URL not found, you plum</p>'
   }
 
-  // switch (requestUrl.pathname)
-  // {
-  //   case '/':
-  //     responseBody = '<a href="/first-of-pair">first-of-pair</a>'
-  //     responseBody += '</br><a href="/second-of-pair">second-of-pair</a></br><a href="/the-pair">the-pair</a>'
-  //     break;
-  //
-  //   case '/first-of-pair':
-  //     responseBody = '<p>And in the beginning there was the First Pair</p>'
-  //     break;
-  //
-  //   case '/second-of-pair':
-  //     responseBody = '<p>and on the second day he separated the first pair from the second</p>'
-  //     break;
-  //
-  //   case '/the-pair':
-  //     responseBody = '<p>The pair both have suspicious moustaches</p>'
-  //     break;
-  //   case '/greeting':
-  //     responseBody = '<p>Welcome, ' + requestUrl.query.name + '!</p>'
-  //     break;
-  //
-  //   default:
-  //     response.statusCode = 404
-  //     responseBody = '<p>URL not found, you plum</p>'
-  // }
+  fs.readFile(fileToRead, function(err, data){
 
-  response.end(responseBody)
+      responseBody = data.toString()
+      if (requestUrl.query.name !== undefined){
+        response.end(responseBody.replace('&name', requestUrl.query.name))
+      } else {
+        response.end(responseBody)
+      }
+
+      callback(err, data)
+    })
+
+  // if(selectedPage.length > 0)
+  // {
+  //   responseBody = selectedPage[0].content
+  // }
+  // else {
+  //   response.statusCode = 404
+  //   responseBody = '<p>URL not found, you plum</p>'
+  // }
+  //
+  // response.end(responseBody)
 }
 
 module.exports = requestHandler
